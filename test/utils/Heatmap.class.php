@@ -20,8 +20,13 @@ class Heatmap {
 	var $startStep;
 	/* @var integer $dot Taille des points de chaleur / Heat dots size */
 	var $dot = 19;
-	/* @var boolean $heatmap Affichage sous forme de carte de température / Show as heatmap */
+	
+	/* @var boolean $heatmap Affichage sous forme de carte de température / Show as heatmap
+	 * 注释的语言我看不懂，我猜测可能是是否生成热点图的布尔变量
+	 *  */
 	var $heatmap = true;
+	
+	
 	/* @var boolean $palette Correctif pour la gestion de palette (cas des carrés rouges) / Correction for palette (in case of red squares) */
 	var $palette = false;
 	/* @var boolean $alpha Valeur de transparence de l'image (par défaut pas de transparence) / Alpha level (default is no alpha) */
@@ -105,10 +110,14 @@ class Heatmap {
 				'filenames' => array (),
 				'absolutes' => array () 
 		); /* Generated files list */
+		
+		
 		$this->startStep = ( int ) floor ( ($this->step - 1) / 2 );
 		$nbOfImages = 1; /* Will be modified after the first image is created */
 		$this->maxClicks = 1; /* Must not be zero for divisions */
 		$this->maxY = 0;
+		
+		
 		/**
 		 * Memory consumption:
 		 * imagecreate	: about 200,000 + 5 * $width * $height bytes
@@ -126,7 +135,8 @@ class Heatmap {
 			$this->height = floor ( ($this->memory - 500000 - 100 * ($this->dot * 360 + 6000)) / (20 * $width) );
 			/* Limit height to 1000px max, with a modulo of 10 */
 			$this->height = ( int ) max ( 100, min ( 1000, $this->height - $this->height % 10 ) );
-		} else {
+		} 
+		else {
 			/* Force height */
 			$this->height = $height;
 		}
@@ -135,8 +145,10 @@ class Heatmap {
 		if ($this->startDrawing () === false) {
 			return false;
 		}
+		
 		$files ['width'] = $this->width;
 		$files ['height'] = $this->height;
+		
 		for($image = 0; $image < $nbOfImages; $image ++) {
 			/* Image creation */
 			$this->image = imagecreatetruecolor ( $this->width, $this->height );

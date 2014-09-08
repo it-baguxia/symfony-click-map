@@ -46,12 +46,14 @@ $heatmap->path  = dirname(__FILE__).'/images';
 
 
 /** Fichier final / Final file */
-$heatmap->file = 'resultfromdb-%d.png';
+$heatmap->file = 'images\/resultfromdb-%d.png';
 /**
  * On force la hauteur finale (attention �� la consommation m��moire dans ce cas !)
  * Forcing final height (take care of the memory consumption in such case!)
 **/
 $images = $heatmap->generate(200, 100);
+
+
 
 
 echo 'R��sultats/Results: ';
@@ -68,7 +70,7 @@ else
 	echo '<br /><br /><p style="line-height:0;">';
 	for ($i = 0; $i < $images['count']; $i++)
 	{
-		echo '<img src="', $images['filenames'][$i], '" width="', $images['width'], '" height="', $images['height'], '" alt="" /> Image ', $i, '<br />';
+		echo '<img src="', $images['filenames'][$i], '" width="', $images['width'], '" height="', $images['height'], '" alt="" /> Image ', $i, '<br /><br />';
 	}
 	echo '</p>';
 }
