@@ -34,9 +34,6 @@ $heatmap = new Heatmap();
 **/
 
 
-
-$heatmap->maxQuery = 'SELECT MAX(CLICK_Y) FROM CLICKS';
-
 $heatmap->database = 'symfony-click-map';
 $heatmap->user = 'clickmap';
 $heatmap->password = 'clickmap';
@@ -47,13 +44,14 @@ $heatmap->path = '.';
 /** Fichier final / Final file */
 $heatmap->file = 'resultfromdb.png';
 
+$heatmap->alpha = 0;
 
 /**
  * 设定宽度和高度，不由计算生成
  */
 $heatmap->width  = 200;
 $heatmap->height = 200;
-
+//$heatmap->palette = true;
 
 
 /**

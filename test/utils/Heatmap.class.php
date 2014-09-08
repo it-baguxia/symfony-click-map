@@ -46,8 +46,7 @@ class Heatmap
 	var $maxClicks;
 	/* @var integer $maxY Hauteur maximale (point le plus bas) / Maximum height (lowest point) */
 	var $maxY;
-	/* @var resource $image Ressource image / Image resource */
-	var $image;
+	
 	/* @var string $file Nom du fichier image (incluant le %d) / Image filename (including %d) */
 	var $file;
 	/* @var string $path Chemin du fichier image / Image path */
@@ -84,8 +83,7 @@ class Heatmap
 	var $query = 'SELECT CLICK_X, CLICK_Y,COUNT FROM CLICKS LIMIT %d,%d';
 	
 	/** @var string $maxQuery Requête renvoyant la coordonnées Y maximale / Max Y coordinate query */
-	var $maxQuery = 'SELECT MAX(COORDS_Y) FROM CLICKS';
-	
+	var $maxQuery = 'SELECT MAX(CLICK_Y) AS MAX_CLICK_Y FROM CLICKS';
 	
 	
 	function Heatmap()
@@ -120,22 +118,21 @@ class Heatmap
 	/**
 	 * 得到坐标中最大的y的数值，这个方法必须在startDrawing()方法开启数据库链接之后调用
 	 */
-	public function getCoordMaxY(){
+	public function getClientDataColumnMax(){
 		
 		//echo $this->maxQuery;
 		$result = mysql_query($this->maxQuery,$this->link);
-		
 		
 		if ($result === false)
 		{
 			return $this->raiseError('Query failed: '.mysql_error());
 		}
 		
-		$max = mysql_fetch_row($result);
+		$max = mysql_fetch_assoc($result);
 		
 		mysql_free_result($result);
 		
-		return $max[0];
+		return $max;
 		
 	}//function getCoordMaxY() end
 	
@@ -188,7 +185,7 @@ class Heatmap
 		return $dots;
 	}
 	
-	function generate($width, $height = 0)
+	function generate()
 	{
 		$this->checkFolderPath();
 
@@ -203,33 +200,31 @@ class Heatmap
 			return false;
 		}
 		
-		$this->maxY = $this->getCoordMaxY();
+		$clientDataColumnMax   = $this->getClientDataColumnMax();
 		
+		$this->maxY      = $clientDataColumnMax['MAX_CLICK_Y'];
 		
 		/* Image creation */
-		$this->image = imagecreatetruecolor($this->width, $this->height);
+		$dataImage = imagecreatetruecolor($this->width, $this->height);
 		/* Image is filled in the color "0", which means 0 click */
 		
-		imagefill($this->image, 0, 0, 0);
+		imagefill($dataImage, 0, 0, 0);
 		
 		/* Draw next pixels for this image */
 		//经过drawPixels以后，$this->image已经是绘制有数据点的图像巨屏对象
-		if ($this->drawPixels() === false)
-		{
-			return false;
-		}
-		
+		$this->drawPixels($dataImage);
 		
 		
 		/* Now, our image is a direct representation of the clicks on each pixel, so create some fuzzy dots to put a nice blur effect if user asked for a heatmap */
-		$dots = $this->createCircleImage();
+		$dots   = $this->createCircleImage();
 		$colors = $this->createColors();
 		
 		
 		$img   = imagecreatetruecolor($this->width, $this->height);
-		$white = imagecolorallocate($img, 255, 255, 255);
+		$this->whiteColor = imagecolorallocate($img, 255, 255, 255);
+		
 		/* «imagefill» doesn't work correctly on some hosts, ending on a red drawing */
-		imagefilledrectangle($img, 0, 0, $this->width - 1, $this->height - 1, $white);
+		imagefilledrectangle($img, 0, 0, $this->width - 1, $this->height - 1, $this->whiteColor);
 		imagealphablending($img, true);
 
 
@@ -237,7 +232,7 @@ class Heatmap
 		{
 			for ($y = $this->startStep; $y < $this->height; $y += $this->step)
 			{
-				$number = (int) ceil(imagecolorat($this->image, $x, $y) / $this->maxClicks * 100);
+				$number = (int) ceil(imagecolorat($dataImage, $x, $y) / $this->maxClicks * 100);
 				
 				if ($number > 0)
 				{
@@ -246,8 +241,6 @@ class Heatmap
 			}
 		}
 		
-		
-		/* Rainbow */
 		if ($this->rainbow === true)
 		{
 			for ($i = 1; $i < 128; $i += 2)
@@ -258,6 +251,7 @@ class Heatmap
 				imageline($img, ceil($i / 2), 0, ceil($i / 2), 10, (127 - $i) * 16777216);
 			}
 		}
+		
 
 		if ($this->alpha === 0)
 		{
@@ -300,10 +294,14 @@ class Heatmap
 
 		$grey  = imagecolorallocate($img, $this->__grey, $this->__grey, $this->__grey);
 		$gray  = imagecolorallocate($img, ceil($this->__grey / 2), ceil($this->__grey / 2), ceil($this->__grey / 2));
-		$white = imagecolorallocate($img, 255, 255, 255);
 		$black = imagecolorallocate($img, 0, 0, 0);
+		$white = imagecolorallocate($img,255,255,255);
 
 		/* maxClicks */
+		/* Rainbow */
+		
+		
+		
 		if ($this->rainbow === true)
 		{
 			imagerectangle($img, 0, 0, 65, 11, $white);
@@ -314,17 +312,10 @@ class Heatmap
 			imagestring($img, 1, floor($right / 2) - 12, 11, 'clicks', $black);
 		}
 
-		/* "No clicks under this line" message */
-			if (defined('LANG_NO_CLICK_BELOW') === true)
-			{
-				imageline($img, 0, $this->height - 1, $this->width, $this->height - 1, $gray);
-				imagestring($img, 1, 1, $this->height - 9, LANG_NO_CLICK_BELOW, $gray);
-			}
-			
+		
 		/* Copyleft */
 		$this->drawCopyright($img,$grey,$gray);
 		
-
 		/* Save PNG file */
 		imagepng($img, sprintf($this->path.$this->file));
 		imagedestroy($img);
@@ -457,7 +448,7 @@ class Heatmap
 	 * @param integer $image Number of the image (to be used with $this->height)
 	 * @return boolean Success
 	 **/
-	function drawPixels()
+	function drawPixels($image)
 	{
 		$limit = 0;
 		do
@@ -492,9 +483,9 @@ class Heatmap
 				$y -= $y % $this->step - $this->startStep;
 				
 				/** Add 1 to the current color of this pixel (color which represents the sum of clicks on this pixel) */
-				$color = imagecolorat($this->image, $x, $y) + $clickCount;
+				$color = imagecolorat($image, $x, $y) + $clickCount;
 				
-				imagesetpixel($this->image, $x, $y, $color);
+				imagesetpixel($image, $x, $y, $color);
 				
 				$this->maxClicks = max($this->maxClicks, $color);
 			
