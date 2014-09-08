@@ -228,19 +228,6 @@ class Heatmap
 			return false;
 		}
 		
-		if ($this->maxY === 0)
-		{
-			if (defined('LANG_ERROR_DATA') === true)
-			{
-				return $this->raiseError(LANG_ERROR_DATA);
-			}
-			else
-			{
-				$this->maxY = 1;
-			}
-		}
-	
-
 		imagepng($this->image, sprintf($this->cache.$this->file.'_temp'));
 		
 		imagedestroy($this->image);
@@ -544,10 +531,7 @@ class Heatmap
 				imagesetpixel($this->image, $x, $y, $color);
 				
 				$this->maxClicks = max($this->maxClicks, $color);
-				
-				/** Looking for the maximum height of click */
-				$this->maxY = max($y, $this->maxY);
-				
+			
 			}
 			
 			/** Free resultset */
