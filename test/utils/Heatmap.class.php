@@ -223,15 +223,13 @@ class Heatmap
 		imagefill($this->image, 0, 0, 0);
 		
 		/* Draw next pixels for this image */
+		//经过drawPixels以后，$this->image已经是绘制有数据点的图像巨屏对象
 		if ($this->drawPixels() === false)
 		{
 			return false;
 		}
 		
-		imagepng($this->image, sprintf($this->cache.$this->file.'_temp'));
 		
-		imagedestroy($this->image);
-
 		/* Result files */
 		$files['filenames'][] = sprintf($this->file);
 		$files['absolutes'][] = sprintf($this->path.$this->file);
@@ -255,31 +253,21 @@ class Heatmap
 		imagefilledrectangle($img, 0, 0, $this->width - 1, $this->height - 1, $white);
 		imagealphablending($img, true);
 
-		$imgSrc = @imagecreatefrompng(sprintf($this->cache.$this->file.'_temp'));
-		@unlink(sprintf($this->cache.$this->file.'_temp'));
-		if ($imgSrc === false)
-		{
-			return $this->raiseError('::MEMORY_OVERFLOW::');
-		}
-		
+
 		for ($x = $this->startStep; $x < $this->width; $x += $this->step)
 		{
 			for ($y = $this->startStep; $y < $this->height; $y += $this->step)
 			{
-				$number = (int) ceil(imagecolorat($imgSrc, $x, $y) / $this->maxClicks * 100);
+				$number = (int) ceil(imagecolorat($this->image, $x, $y) / $this->maxClicks * 100);
 				
-				if ($number !== 0)
+				if ($number > 0)
 				{
 					imagecopy($img, $dots[$number], ceil($x - $this->dot / 2), ceil($y - $this->dot / 2), 0, 0, $this->dot, $this->dot);
-				
 				}
 			}
 		}
 		
 		
-		/* Destroy image source */
-		imagedestroy($imgSrc);
-
 		/* Rainbow */
 		if ($this->rainbow === true)
 		{
