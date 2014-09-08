@@ -18,12 +18,15 @@ class Heatmap
 	var $step = 5;
 	/* @var integer $startStep */
 	var $startStep;
-	/* @var integer $dot Taille des points de chaleur / Heat dots size */
-	var $dot = 19;
+	
+	
+	/* @var integer $dot Taille des points de chaleur / Heat dots size 
+	 * 原来的注释我看不懂，但是这个可以判断为每一个数据点的形成的图像的半径大小
+	 * */
+	var $dot = 20;
 	
 	/* @var boolean $heatmap Affichage sous forme de carte de température / Show as heatmap */
 	var $heatmap = true;
-	
 	
 	/* @var boolean $palette Correctif pour la gestion de palette (cas des carrés rouges) / Correction for palette (in case of red squares) */
 	var $palette = false;
@@ -136,6 +139,53 @@ class Heatmap
 	
 	
 	
+	private function createCircleImage(){
+		
+		$dots = array (); // 创建一个数组来承接结果
+		
+		/*
+		 * 创建128个真彩颜色的图像，然后改变混合模式，然后把图像对象存储到数组里面
+		 */
+		for($i = 0; $i < 128; $i ++) {
+			/**
+			 * (PHP 4 >= 4.0.6, PHP 5)
+			 * imagecreatetruecolor — 新建一个真彩色图像
+			 */
+			$dots [$i] = imagecreatetruecolor ( $this->dot, $this->dot );
+			imagealphablending ( $dots [$i], false );
+		}
+		
+		$hlkCount = 0;
+		
+		for($x = 0; $x < $this->dot; $x ++) { // $this->dot的数值是20，那么外层循环20次
+			
+			for($y = 0; $y < $this->dot; $y ++) { // $this->dot的数值是20，那么内层循环20次
+				
+				/*
+				 * sinx 和 siny的数值每次循环都不一样，因为$x和$y每次循环都在发生变化 pi()是取得圆周率的地方，自我感觉没有什么特别的意义， 因为pi获取的时候是一个常数
+				 */
+				$sinX = sin ( $x * pi () / $this->dot );
+				$sinY = sin ( $y * pi () / $this->dot );
+				
+				for($i = 0; $i < 128; $i ++) {
+					
+					// 保证处于同一个半径点上的颜色是一样的
+					$circleColor = 127 - $i * $sinX * $sinY * $sinX * $sinY;
+					
+					$circleColor = intval($circleColor)  * 16777216;
+					
+					imagesetpixel ( $dots [$i], $x, $y, $circleColor );
+					
+					$hlkCount++;
+				}
+			}
+		}
+		
+		//echo $hlkCount;
+		
+		return $dots;
+	}
+	
 	function generate($width, $height = 0)
 	{
 		$this->checkFolderPath();
@@ -211,26 +261,8 @@ class Heatmap
 		}
 
 		/* Now, our image is a direct representation of the clicks on each pixel, so create some fuzzy dots to put a nice blur effect if user asked for a heatmap */
-		for ($i = 0; $i < 128; $i++)
-		{
-			$dots[$i] = imagecreatetruecolor($this->dot, $this->dot);
-			imagealphablending($dots[$i], false);
-		}
+		$dots = $this->createCircleImage();
 		
-		for ($x = 0; $x < $this->dot; $x++)
-		{
-			for ($y = 0; $y < $this->dot; $y++)
-			{
-				$sinX = sin($x * pi() / $this->dot);
-				$sinY = sin($y * pi() / $this->dot);
-				for ($i = 0; $i < 128; $i++)
-				{
-					$alpha = 127 - $i * $sinX * $sinY * $sinX * $sinY;
-					imagesetpixel($dots[$i], $x, $y, ((int) $alpha) * 16777216);
-				}
-			}
-		}
-
 		
 		$colors = $this->createColors();
 		
