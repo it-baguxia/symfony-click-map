@@ -234,16 +234,8 @@ class Heatmap
 		$files['filenames'][] = sprintf($this->file);
 		$files['absolutes'][] = sprintf($this->path.$this->file);
 		
-		
-		/* End tasks */
-		if ($this->finishDrawing() === false)
-		{
-			return false;
-		}
-
 		/* Now, our image is a direct representation of the clicks on each pixel, so create some fuzzy dots to put a nice blur effect if user asked for a heatmap */
 		$dots = $this->createCircleImage();
-		
 		$colors = $this->createColors();
 		
 		
@@ -532,15 +524,7 @@ class Heatmap
 		return true;
 	}
 	
-	/**
-	 * Do some cleaning or ending tasks (close database, reset array...)
-	 **/
-	function finishDrawing()
-	{
-		/** Close connection */
-		mysql_close($this->link);
-		return true;
-	}
+	
 
 }
 
