@@ -110,8 +110,30 @@ class Heatmap
 			return $this->raiseError('file = "'.$this->file.'" doesn\'t include a \'%d\' for image number');
 		}
 		
-		
 	}//function checkFolderPath() end
+	
+	/**
+	 * 得到坐标中最大的y的数值，这个方法必须在startDrawing()方法开启数据库链接之后调用
+	 */
+	public function getCoordMaxY(){
+		
+		//echo $this->maxQuery;
+		$result = mysql_query($this->maxQuery,$this->link);
+		
+		
+		if ($result === false)
+		{
+			return $this->raiseError('Query failed: '.mysql_error());
+		}
+		
+		$max = mysql_fetch_row($result);
+		
+		mysql_free_result($result);
+		
+		return $max[0];
+		
+	}//function getCoordMaxY() end
+	
 	
 	
 	function generate($width, $height = 0)
@@ -130,6 +152,10 @@ class Heatmap
 		{
 			return false;
 		}
+		
+		$this->maxY = $this->getCoordMaxY();
+		
+		
 		$files['width'] = $this->width;
 		$files['height'] = $this->height;
 		
@@ -142,7 +168,6 @@ class Heatmap
 			
 			imagefill($this->image, 0, 0, 0);
 			
-
 			/* Draw next pixels for this image */
 			if ($this->drawPixels($image) === false)
 			{
@@ -434,17 +459,6 @@ class Heatmap
 			return $this->raiseError('Database selection error: '.$this->database);
 		}
 		
-		//echo $this->maxQuery;
-		$result = mysql_query($this->maxQuery);
-		
-		
-		if ($result === false)
-		{
-			return $this->raiseError('Query failed: '.mysql_error());
-		}
-		$max = mysql_fetch_row($result);
-		$this->maxY = $max[0];
-		mysql_free_result($result);
 		return true;
 	}
 	
