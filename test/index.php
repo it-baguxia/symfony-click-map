@@ -60,27 +60,20 @@ $heatmap->height = 200;
  * On force la hauteur finale (attention à la consommation mémoire dans ce cas !)
  * Forcing final height (take care of the memory consumption in such case!)
 **/
-$images = $heatmap->generate(200, 100);
+$heatmap->generate(200, 100);
 
 
 echo 'Résultats/Results: ';
-if ($images === false)
-{
-	echo 'error: '.$heatmap->error;
-}
-else
-{
-	echo '<pre>';
-	print_r($images);
-	echo '</pre>';
 
-	echo '<br /><br /><p style="line-height:0;">';
-	for ($i = 0; $i < $images['count']; $i++)
-	{
-		echo '<img src="', $images['filenames'][$i], '" width="', $images['width'], '" height="', $images['height'], '" alt="" /> Image ', $i, '<br /><br /><br /><br />';
-	}
-	echo '</p>';
-}
+echo '<pre>';
+echo '</pre>';
+
+echo '<br /><br /><p style="line-height:0;">';
+
+echo '<img src="', $heatmap->file, '" width="', $heatmap->width, '" height="', $heatmap->height, '" alt="" /> Image ', '<br /><br /><br /><br />';
+
+echo '</p>';
+
 ?>
 </body>
 </html>

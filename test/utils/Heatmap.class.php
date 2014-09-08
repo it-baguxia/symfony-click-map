@@ -192,9 +192,7 @@ class Heatmap
 	{
 		$this->checkFolderPath();
 
-		$files = array('filenames' => array(), 'absolutes' => array()); /* Generated files list */
 		$this->startStep = (int) floor(($this->step - 1) / 2);
-		$nbOfImages = 1; /* Will be modified after the first image is created */
 		$this->maxClicks = 1; /* Must not be zero for divisions */
 		$this->maxY = 0;
 		
@@ -206,14 +204,6 @@ class Heatmap
 		}
 		
 		$this->maxY = $this->getCoordMaxY();
-		
-		//在循环开始之前就知道要生成的图片的数量，而不是在循环的里面去更新这个数值
-		$nbOfImages = (int) ceil($this->maxY / $this->height);
-		
-		//根据前面的一些得到的结果，设定files数组里面的键名
-		$files['count'] = $nbOfImages;
-		$files['width'] = $this->width;
-		$files['height'] = $this->height;
 		
 		
 		/* Image creation */
@@ -230,9 +220,6 @@ class Heatmap
 		}
 		
 		
-		/* Result files */
-		$files['filenames'][] = sprintf($this->file);
-		$files['absolutes'][] = sprintf($this->path.$this->file);
 		
 		/* Now, our image is a direct representation of the clicks on each pixel, so create some fuzzy dots to put a nice blur effect if user asked for a heatmap */
 		$dots = $this->createCircleImage();
@@ -348,7 +335,6 @@ class Heatmap
 			imagedestroy($dots[$i]);
 		}
 		 
-		return $files;
 	}
 	
 	/**
