@@ -64,9 +64,13 @@ class HeatmapFromDatabase extends Heatmap
 	**/
 	function drawPixels($image)
 	{
+		
 		$limit = 0;
 		do
 		{
+			
+			
+			
 			/** Select with limit */
 			$result = mysql_query(sprintf($this->query, $image * $this->height, ($image + 1) * $this->height - 1).' LIMIT '.$limit.','.$this->limit);
 			if ($result === false)

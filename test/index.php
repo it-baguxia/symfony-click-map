@@ -49,6 +49,8 @@ $heatmap->file = 'resultfromdb-%d.png';
  * Forcing final height (take care of the memory consumption in such case!)
 **/
 $images = $heatmap->generate(200, 100);
+
+
 echo 'Résultats/Results: ';
 if ($images === false)
 {

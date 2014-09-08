@@ -20,8 +20,11 @@ class Heatmap
 	var $startStep;
 	/* @var integer $dot Taille des points de chaleur / Heat dots size */
 	var $dot = 19;
+	
 	/* @var boolean $heatmap Affichage sous forme de carte de température / Show as heatmap */
 	var $heatmap = true;
+	
+	
 	/* @var boolean $palette Correctif pour la gestion de palette (cas des carrés rouges) / Correction for palette (in case of red squares) */
 	var $palette = false;
 	/* @var boolean $alpha Valeur de transparence de l'image (par défaut pas de transparence) / Alpha level (default is no alpha) */
@@ -123,16 +126,10 @@ class Heatmap
 		{
 			/* Image creation */
 			$this->image = imagecreatetruecolor($this->width, $this->height);
-			if ($this->heatmap === false)
-			{
-				$grey = imagecolorallocate($this->image, $this->__grey, $this->__grey, $this->__grey);
-				imagefill($this->image, 0, 0, $grey);
-			}
-			else
-			{
-				/* Image is filled in the color "0", which means 0 click */
-				imagefill($this->image, 0, 0, 0);
-			}
+			/* Image is filled in the color "0", which means 0 click */
+			
+			imagefill($this->image, 0, 0, 0);
+			
 
 			/* Draw next pixels for this image */
 			if ($this->drawPixels($image) === false)
@@ -156,21 +153,8 @@ class Heatmap
 				$files['count'] = $nbOfImages;
 			}
 
-			if ($this->heatmap === true)
-			{
-				imagepng($this->image, sprintf($this->cache.$this->file.'_temp', $image));
-			}
-			else
-			{
-				/* "No clicks under this line" message */
-				if ($image === $nbOfImages - 1 && defined('LANG_NO_CLICK_BELOW') === true)
-				{
-					$black = imagecolorallocate($this->image, 0, 0, 0);
-					imageline($this->image, 0, $this->height - 1, $this->width, $this->height - 1, $black);
-					imagestring($this->image, 1, 1, $this->height - 9, LANG_NO_CLICK_BELOW, $black);
-				}
-				imagepng($this->image, sprintf($this->path.$this->file, $image));
-			}
+			imagepng($this->image, sprintf($this->cache.$this->file.'_temp', $image));
+			
 			imagedestroy($this->image);
 
 			/* Result files */
@@ -183,10 +167,6 @@ class Heatmap
 			return false;
 		}
 
-		if ($this->heatmap === false)
-		{
-			return $files;
-		}
 		/* Now, our image is a direct representation of the clicks on each pixel, so create some fuzzy dots to put a nice blur effect if user asked for a heatmap */
 		for ($i = 0; $i < 128; $i++)
 		{
