@@ -32,8 +32,11 @@ $heatmap = new Heatmap();
  * Requête (CLICK_Y se doit d'avoir un index pour de bonnes performances, voir EXPLAIN dans le manuel MySQL)
  * The query (CLICK_Y should have an index for good performances, see EXPLAIN in MySQL manual)
 **/
-$heatmap->query = 'SELECT CLICK_X, CLICK_Y FROM CLICKS WHERE CLICK_Y BETWEEN %d AND %d';
+
+
+
 $heatmap->maxQuery = 'SELECT MAX(CLICK_Y) FROM CLICKS';
+
 $heatmap->database = 'symfony-click-map';
 $heatmap->user = 'clickmap';
 $heatmap->password = 'clickmap';

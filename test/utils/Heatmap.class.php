@@ -79,8 +79,10 @@ class Heatmap
 	var $limit = 1000;
 	/** @var resource $link Lien (interne) MySQL / MySQL (internal) link */
 	var $link = false;
+	
 	/** @var string $query Requête renvoyant les coordonnées des clics / Clicks coordinates query */
-	var $query = 'SELECT COORDS_X, COORDS_Y FROM CLICKS WHERE COORDS_Y BETWEEN %d AND %d';
+	var $query = 'SELECT CLICK_X, CLICK_Y,COUNT FROM CLICKS WHERE CLICK_Y BETWEEN %d AND %d';
+	
 	/** @var string $maxQuery Requête renvoyant la coordonnées Y maximale / Max Y coordinate query */
 	var $maxQuery = 'SELECT MAX(COORDS_Y) FROM CLICKS';
 	
@@ -263,8 +265,8 @@ class Heatmap
 		/* Now, our image is a direct representation of the clicks on each pixel, so create some fuzzy dots to put a nice blur effect if user asked for a heatmap */
 		$dots = $this->createCircleImage();
 		
-		
 		$colors = $this->createColors();
+		
 		
 		for ($image = 0; $image < $nbOfImages; $image++)
 		{
@@ -280,17 +282,22 @@ class Heatmap
 			{
 				return $this->raiseError('::MEMORY_OVERFLOW::');
 			}
+			
 			for ($x = $this->startStep; $x < $this->width; $x += $this->step)
 			{
 				for ($y = $this->startStep; $y < $this->height; $y += $this->step)
 				{
-					$dot = (int) ceil(imagecolorat($imgSrc, $x, $y) / $this->maxClicks * 100);
-					if ($dot !== 0)
+					$number = (int) ceil(imagecolorat($imgSrc, $x, $y) / $this->maxClicks * 100);
+					
+					if ($number !== 0)
 					{
-						imagecopy($img, $dots[$dot], ceil($x - $this->dot / 2), ceil($y - $this->dot / 2), 0, 0, $this->dot, $this->dot);
+						imagecopy($img, $dots[$number], ceil($x - $this->dot / 2), ceil($y - $this->dot / 2), 0, 0, $this->dot, $this->dot);
+					
 					}
 				}
 			}
+			
+			
 			/* Destroy image source */
 			imagedestroy($imgSrc);
 
@@ -517,22 +524,31 @@ class Heatmap
 			{
 				return $this->raiseError('Query failed: '.mysql_error());
 			}
+			
 			$count = mysql_num_rows($result);
 	
-			while ($click = mysql_fetch_row($result))
+			while ($click = mysql_fetch_assoc($result))
 			{
-				$x = (int) $click[0];
-				$y = (int) ($click[1]  - $image * $this->height);
+				//print_r($click);
+				
+				$x     = (int) $click['CLICK_X'];
+				$y     = (int) ($click['CLICK_Y']  - $image * $this->height);
+				$count = $click['COUNT'];
+				
 				if ($x < 0 || $x >= $this->width)
 				{
 					continue;
 				}
+				
 				/** Apply a calculus for the step, with increases the speed of rendering : step = 3, then pixel is drawn at x = 2 (center of a 3x3 square) */
 				$x -= $x % $this->step - $this->startStep;
 				$y -= $y % $this->step - $this->startStep;
+				
 				/** Add 1 to the current color of this pixel (color which represents the sum of clicks on this pixel) */
-				$color = imagecolorat($this->image, $x, $y) + 1;
+				$color = imagecolorat($this->image, $x, $y) + $count;
+				
 				imagesetpixel($this->image, $x, $y, $color);
+				
 				$this->maxClicks = max($this->maxClicks, $color);
 				if ($image === 0)
 				{
