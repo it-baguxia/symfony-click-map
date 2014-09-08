@@ -88,10 +88,13 @@ class Heatmap
 		$this->alpha = min($this->alpha, 127);
 	}
 
-	function generate($width, $height = 0)
-	{
+	/**
+	 * 检查文件夹是否符合合法性
+	 */
+	private function checkFolderPath(){
+		
 		/* First check paths */
-		$this->path = rtrim($this->path, '/').'/';
+		$this->path  = rtrim($this->path, '/').'/';
 		$this->cache = rtrim($this->cache, '/').'/';
 		$this->file = str_replace('/', '', $this->file);
 		if (!is_dir($this->path) || $this->path === '/')
@@ -106,6 +109,14 @@ class Heatmap
 		{
 			return $this->raiseError('file = "'.$this->file.'" doesn\'t include a \'%d\' for image number');
 		}
+		
+		
+	}//function checkFolderPath() end
+	
+	
+	function generate($width, $height = 0)
+	{
+		$this->checkFolderPath();
 
 		$files = array('filenames' => array(), 'absolutes' => array()); /* Generated files list */
 		$this->startStep = (int) floor(($this->step - 1) / 2);
@@ -121,6 +132,8 @@ class Heatmap
 		}
 		$files['width'] = $this->width;
 		$files['height'] = $this->height;
+		
+		
 		for ($image = 0; $image < $nbOfImages; $image++)
 		{
 			/* Image creation */
@@ -301,10 +314,12 @@ class Heatmap
 			imagepng($img, sprintf($this->path.$this->file, $image));
 			imagedestroy($img);
 		}
+		
 		for ($i = 0; $i < 100; $i++)
 		{
 			imagedestroy($dots[$i]);
 		}
+		 
 		return $files;
 	}
 	
