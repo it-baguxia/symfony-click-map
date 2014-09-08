@@ -155,7 +155,11 @@ class Heatmap
 		
 		$this->maxY = $this->getCoordMaxY();
 		
+		//在循环开始之前就知道要生成的图片的数量，而不是在循环的里面去更新这个数值
+		$nbOfImages = (int) ceil($this->maxY / $this->height);
 		
+		//根据前面的一些得到的结果，设定files数组里面的键名
+		$files['count'] = $nbOfImages;
 		$files['width'] = $this->width;
 		$files['height'] = $this->height;
 		
@@ -173,6 +177,7 @@ class Heatmap
 			{
 				return false;
 			}
+			
 			if ($image === 0)
 			{
 				if ($this->maxY === 0)
@@ -186,8 +191,6 @@ class Heatmap
 						$this->maxY = 1;
 					}
 				}
-				$nbOfImages = (int) ceil($this->maxY / $this->height);
-				$files['count'] = $nbOfImages;
 			}
 
 			imagepng($this->image, sprintf($this->cache.$this->file.'_temp', $image));
@@ -198,6 +201,9 @@ class Heatmap
 			$files['filenames'][] = sprintf($this->file, $image);
 			$files['absolutes'][] = sprintf($this->path.$this->file, $image);
 		}
+		
+		
+		
 		/* End tasks */
 		if ($this->finishDrawing() === false)
 		{
