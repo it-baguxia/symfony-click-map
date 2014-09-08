@@ -45,14 +45,14 @@ $heatmap->cache = '.';
 /** Fichiers générés / Generated files */
 $heatmap->path = '.';
 /** Fichier final / Final file */
-$heatmap->file = 'resultfromdb-%d.png';
+$heatmap->file = 'resultfromdb.png';
 
 
 /**
  * 设定宽度和高度，不由计算生成
  */
 $heatmap->width  = 200;
-$heatmap->height = 100;
+$heatmap->height = 200;
 
 
 

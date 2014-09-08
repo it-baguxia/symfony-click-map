@@ -81,7 +81,7 @@ class Heatmap
 	var $link = false;
 	
 	/** @var string $query Requête renvoyant les coordonnées des clics / Clicks coordinates query */
-	var $query = 'SELECT CLICK_X, CLICK_Y,COUNT FROM CLICKS WHERE CLICK_Y BETWEEN %d AND %d';
+	var $query = 'SELECT CLICK_X, CLICK_Y,COUNT FROM CLICKS LIMIT %d,%d';
 	
 	/** @var string $maxQuery Requête renvoyant la coordonnées Y maximale / Max Y coordinate query */
 	var $maxQuery = 'SELECT MAX(COORDS_Y) FROM CLICKS';
@@ -216,44 +216,38 @@ class Heatmap
 		$files['height'] = $this->height;
 		
 		
-		for ($image = 0; $image < $nbOfImages; $image++)
+		/* Image creation */
+		$this->image = imagecreatetruecolor($this->width, $this->height);
+		/* Image is filled in the color "0", which means 0 click */
+		
+		imagefill($this->image, 0, 0, 0);
+		
+		/* Draw next pixels for this image */
+		if ($this->drawPixels() === false)
 		{
-			/* Image creation */
-			$this->image = imagecreatetruecolor($this->width, $this->height);
-			/* Image is filled in the color "0", which means 0 click */
-			
-			imagefill($this->image, 0, 0, 0);
-			
-			/* Draw next pixels for this image */
-			if ($this->drawPixels($image) === false)
-			{
-				return false;
-			}
-			
-			if ($image === 0)
-			{
-				if ($this->maxY === 0)
-				{
-					if (defined('LANG_ERROR_DATA') === true)
-					{
-						return $this->raiseError(LANG_ERROR_DATA);
-					}
-					else
-					{
-						$this->maxY = 1;
-					}
-				}
-			}
-
-			imagepng($this->image, sprintf($this->cache.$this->file.'_temp', $image));
-			
-			imagedestroy($this->image);
-
-			/* Result files */
-			$files['filenames'][] = sprintf($this->file, $image);
-			$files['absolutes'][] = sprintf($this->path.$this->file, $image);
+			return false;
 		}
 		
+		if ($this->maxY === 0)
+		{
+			if (defined('LANG_ERROR_DATA') === true)
+			{
+				return $this->raiseError(LANG_ERROR_DATA);
+			}
+			else
+			{
+				$this->maxY = 1;
+			}
+		}
+	
+
+		imagepng($this->image, sprintf($this->cache.$this->file.'_temp'));
+		
+		imagedestroy($this->image);
+
+		/* Result files */
+		$files['filenames'][] = sprintf($this->file);
+		$files['absolutes'][] = sprintf($this->path.$this->file);
 		
 		
 		/* End tasks */
@@ -268,122 +262,119 @@ class Heatmap
 		$colors = $this->createColors();
 		
 		
-		for ($image = 0; $image < $nbOfImages; $image++)
+		$img   = imagecreatetruecolor($this->width, $this->height);
+		$white = imagecolorallocate($img, 255, 255, 255);
+		/* «imagefill» doesn't work correctly on some hosts, ending on a red drawing */
+		imagefilledrectangle($img, 0, 0, $this->width - 1, $this->height - 1, $white);
+		imagealphablending($img, true);
+
+		$imgSrc = @imagecreatefrompng(sprintf($this->cache.$this->file.'_temp'));
+		@unlink(sprintf($this->cache.$this->file.'_temp'));
+		if ($imgSrc === false)
 		{
-			$img = imagecreatetruecolor($this->width, $this->height);
-			$white = imagecolorallocate($img, 255, 255, 255);
-			/* «imagefill» doesn't work correctly on some hosts, ending on a red drawing */
-			imagefilledrectangle($img, 0, 0, $this->width - 1, $this->height - 1, $white);
-			imagealphablending($img, true);
-
-			$imgSrc = @imagecreatefrompng(sprintf($this->cache.$this->file.'_temp', $image));
-			@unlink(sprintf($this->cache.$this->file.'_temp', $image));
-			if ($imgSrc === false)
+			return $this->raiseError('::MEMORY_OVERFLOW::');
+		}
+		
+		for ($x = $this->startStep; $x < $this->width; $x += $this->step)
+		{
+			for ($y = $this->startStep; $y < $this->height; $y += $this->step)
 			{
-				return $this->raiseError('::MEMORY_OVERFLOW::');
-			}
-			
-			for ($x = $this->startStep; $x < $this->width; $x += $this->step)
-			{
-				for ($y = $this->startStep; $y < $this->height; $y += $this->step)
+				$number = (int) ceil(imagecolorat($imgSrc, $x, $y) / $this->maxClicks * 100);
+				
+				if ($number !== 0)
 				{
-					$number = (int) ceil(imagecolorat($imgSrc, $x, $y) / $this->maxClicks * 100);
-					
-					if ($number !== 0)
-					{
-						imagecopy($img, $dots[$number], ceil($x - $this->dot / 2), ceil($y - $this->dot / 2), 0, 0, $this->dot, $this->dot);
-					
-					}
+					imagecopy($img, $dots[$number], ceil($x - $this->dot / 2), ceil($y - $this->dot / 2), 0, 0, $this->dot, $this->dot);
+				
 				}
 			}
-			
-			
-			/* Destroy image source */
-			imagedestroy($imgSrc);
+		}
+		
+		
+		/* Destroy image source */
+		imagedestroy($imgSrc);
 
-			/* Rainbow */
-			if ($image === 0 && $this->rainbow === true)
+		/* Rainbow */
+		if ($this->rainbow === true)
+		{
+			for ($i = 1; $i < 128; $i += 2)
 			{
-				for ($i = 1; $i < 128; $i += 2)
-				{
-					/* Erase previous alpha channel so that clicks don't change the heatmap by combining their alpha */
-					imageline($img, ceil($i / 2), 0, ceil($i / 2), 10, 16777215);
-					/* Then put our alpha */
-					imageline($img, ceil($i / 2), 0, ceil($i / 2), 10, (127 - $i) * 16777216);
-				}
+				/* Erase previous alpha channel so that clicks don't change the heatmap by combining their alpha */
+				imageline($img, ceil($i / 2), 0, ceil($i / 2), 10, 16777215);
+				/* Then put our alpha */
+				imageline($img, ceil($i / 2), 0, ceil($i / 2), 10, (127 - $i) * 16777216);
 			}
+		}
 
-			if ($this->alpha === 0)
+		if ($this->alpha === 0)
+		{
+			/* Some version of imagetruecolortopalette() don't transform alpha value to non alpha */
+			if ($this->palette === true)
 			{
-				/* Some version of imagetruecolortopalette() don't transform alpha value to non alpha */
-				if ($this->palette === true)
-				{
-					for ($x = 0; $x < $this->width; $x++)
-					{
-						for ($y = 0; $y < $this->height; $y++)
-						{
-							/* Get Alpha value (0->127) and transform it to red (divide color by 16777216 and multiply by 65536 * 2 (red is 0->255), so divide it by 128) */
-							imagesetpixel($img, $x, $y, (imagecolorat($img, $x, $y) & 0x7F000000) / 128);
-						}
-					}
-				}
-
-				/* Change true color image to palette then change palette colors */
-				imagetruecolortopalette($img, false, 127);
-				for ($i = 0, $max = imagecolorstotal($img); $i < $max; $i++)
-				{
-					$color = imagecolorsforindex($img, $i);
-					imagecolorset($img, $i, $colors[floor(127 - $color['red'] / 2)][0], $colors[floor(127 - $color['red'] / 2)][1], $colors[floor(127 - $color['red'] / 2)][2]);
-				}
-			}
-			else
-			{
-				/* Need some transparency, really? So we have to deal with each and every pixel */
-				imagealphablending($img, false);
-				imagesavealpha($img, true);
 				for ($x = 0; $x < $this->width; $x++)
 				{
 					for ($y = 0; $y < $this->height; $y++)
 					{
-						/* Get blue value (0->255), divide it by 2, and apply transparency + colors */
-						$blue = floor((imagecolorat($img, $x, $y) & 0xFF) / 2);
-						imagesetpixel($img, $x, $y, floor($this->alpha * $blue / 127) * 16777216 + $colors[127 - $blue][0] * 65536 + $colors[127 - $blue][1] * 256 + $colors[127 - $blue][2]);
+						/* Get Alpha value (0->127) and transform it to red (divide color by 16777216 and multiply by 65536 * 2 (red is 0->255), so divide it by 128) */
+						imagesetpixel($img, $x, $y, (imagecolorat($img, $x, $y) & 0x7F000000) / 128);
 					}
 				}
 			}
 
-			$grey  = imagecolorallocate($img, $this->__grey, $this->__grey, $this->__grey);
-			$gray  = imagecolorallocate($img, ceil($this->__grey / 2), ceil($this->__grey / 2), ceil($this->__grey / 2));
-			$white = imagecolorallocate($img, 255, 255, 255);
-			$black = imagecolorallocate($img, 0, 0, 0);
-
-			/* maxClicks */
-			if ($image === 0 && $this->rainbow === true)
+			/* Change true color image to palette then change palette colors */
+			imagetruecolortopalette($img, false, 127);
+			for ($i = 0, $max = imagecolorstotal($img); $i < $max; $i++)
 			{
-				imagerectangle($img, 0, 0, 65, 11, $white);
-				imagefilledrectangle($img, 0, 11, 65, 18, $white);
-				imagestring($img, 1, 0, 11, '0', $black);
-				$right = 66 - strlen($this->maxClicks) * 5;
-				imagestring($img, 1, $right, 11, $this->maxClicks, $black);
-				imagestring($img, 1, floor($right / 2) - 12, 11, 'clicks', $black);
+				$color = imagecolorsforindex($img, $i);
+				imagecolorset($img, $i, $colors[floor(127 - $color['red'] / 2)][0], $colors[floor(127 - $color['red'] / 2)][1], $colors[floor(127 - $color['red'] / 2)][2]);
 			}
-
-			if ($image === $nbOfImages - 1)
-			{
-				/* "No clicks under this line" message */
-				if (defined('LANG_NO_CLICK_BELOW') === true)
-				{
-					imageline($img, 0, $this->height - 1, $this->width, $this->height - 1, $gray);
-					imagestring($img, 1, 1, $this->height - 9, LANG_NO_CLICK_BELOW, $gray);
-				}
-				/* Copyleft */
-				$this->drawCopyright($img,$grey,$gray);
-			}
-
-			/* Save PNG file */
-			imagepng($img, sprintf($this->path.$this->file, $image));
-			imagedestroy($img);
 		}
+		else
+		{
+			/* Need some transparency, really? So we have to deal with each and every pixel */
+			imagealphablending($img, false);
+			imagesavealpha($img, true);
+			for ($x = 0; $x < $this->width; $x++)
+			{
+				for ($y = 0; $y < $this->height; $y++)
+				{
+					/* Get blue value (0->255), divide it by 2, and apply transparency + colors */
+					$blue = floor((imagecolorat($img, $x, $y) & 0xFF) / 2);
+					imagesetpixel($img, $x, $y, floor($this->alpha * $blue / 127) * 16777216 + $colors[127 - $blue][0] * 65536 + $colors[127 - $blue][1] * 256 + $colors[127 - $blue][2]);
+				}
+			}
+		}
+
+		$grey  = imagecolorallocate($img, $this->__grey, $this->__grey, $this->__grey);
+		$gray  = imagecolorallocate($img, ceil($this->__grey / 2), ceil($this->__grey / 2), ceil($this->__grey / 2));
+		$white = imagecolorallocate($img, 255, 255, 255);
+		$black = imagecolorallocate($img, 0, 0, 0);
+
+		/* maxClicks */
+		if ($this->rainbow === true)
+		{
+			imagerectangle($img, 0, 0, 65, 11, $white);
+			imagefilledrectangle($img, 0, 11, 65, 18, $white);
+			imagestring($img, 1, 0, 11, '0', $black);
+			$right = 66 - strlen($this->maxClicks) * 5;
+			imagestring($img, 1, $right, 11, $this->maxClicks, $black);
+			imagestring($img, 1, floor($right / 2) - 12, 11, 'clicks', $black);
+		}
+
+		/* "No clicks under this line" message */
+			if (defined('LANG_NO_CLICK_BELOW') === true)
+			{
+				imageline($img, 0, $this->height - 1, $this->width, $this->height - 1, $gray);
+				imagestring($img, 1, 1, $this->height - 9, LANG_NO_CLICK_BELOW, $gray);
+			}
+			
+		/* Copyleft */
+		$this->drawCopyright($img,$grey,$gray);
+		
+
+		/* Save PNG file */
+		imagepng($img, sprintf($this->path.$this->file));
+		imagedestroy($img);
+		
 		
 		for ($i = 0; $i < 100; $i++)
 		{
@@ -513,13 +504,16 @@ class Heatmap
 	 * @param integer $image Number of the image (to be used with $this->height)
 	 * @return boolean Success
 	 **/
-	function drawPixels($image)
+	function drawPixels()
 	{
 		$limit = 0;
 		do
 		{
 			/** Select with limit */
-			$result = mysql_query(sprintf($this->query, $image * $this->height, ($image + 1) * $this->height - 1).' LIMIT '.$limit.','.$this->limit);
+			$sql = sprintf($this->query,   $limit ,  $this->limit );
+			
+			$result = mysql_query($sql,$this->link);
+			
 			if ($result === false)
 			{
 				return $this->raiseError('Query failed: '.mysql_error());
@@ -531,9 +525,9 @@ class Heatmap
 			{
 				//print_r($click);
 				
-				$x     = (int) $click['CLICK_X'];
-				$y     = (int) ($click['CLICK_Y']  - $image * $this->height);
-				$count = $click['COUNT'];
+				$x     = intval ( $click['CLICK_X']) ;
+				$y     = intval ( $click['CLICK_Y'] );
+				$clickCount = $click['COUNT'];
 				
 				if ($x < 0 || $x >= $this->width)
 				{
@@ -545,22 +539,24 @@ class Heatmap
 				$y -= $y % $this->step - $this->startStep;
 				
 				/** Add 1 to the current color of this pixel (color which represents the sum of clicks on this pixel) */
-				$color = imagecolorat($this->image, $x, $y) + $count;
+				$color = imagecolorat($this->image, $x, $y) + $clickCount;
 				
 				imagesetpixel($this->image, $x, $y, $color);
 				
 				$this->maxClicks = max($this->maxClicks, $color);
-				if ($image === 0)
-				{
-					/** Looking for the maximum height of click */
-					$this->maxY = max($y, $this->maxY);
-				}
+				
+				/** Looking for the maximum height of click */
+				$this->maxY = max($y, $this->maxY);
+				
 			}
+			
 			/** Free resultset */
 			mysql_free_result($result);
 	
 			$limit += $this->limit;
+			
 		} while ($count === $this->limit);
+		
 		return true;
 	}
 	
