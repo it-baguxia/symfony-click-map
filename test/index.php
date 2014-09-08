@@ -43,6 +43,16 @@ $heatmap->cache = '.';
 $heatmap->path = '.';
 /** Fichier final / Final file */
 $heatmap->file = 'resultfromdb-%d.png';
+
+
+/**
+ * 设定宽度和高度，不由计算生成
+ */
+$heatmap->width  = 200;
+$heatmap->height = 100;
+
+
+
 /**
  * On force la hauteur finale (attention à la consommation mémoire dans ce cas !)
  * Forcing final height (take care of the memory consumption in such case!)

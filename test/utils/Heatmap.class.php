@@ -112,32 +112,8 @@ class Heatmap
 		$nbOfImages = 1; /* Will be modified after the first image is created */
 		$this->maxClicks = 1; /* Must not be zero for divisions */
 		$this->maxY = 0;
-		/**
-		 * Memory consumption:
-		 * imagecreate	: about 200,000 + 5 * $width * $height bytes
-		 * dots			: about 6,000 + 360 * DOT_WIDTH bytes each (100 dots)
-		 * imagepng		: about 4 * $width * $height bytes
-		 * So a rough idea of the memory is 10 * $width * $height + 500,000 (2 images) + 100 * (DOT_WIDTH * 360 + 6000)
-		 * */
-		$this->width = (int) abs($width);
-		if ($this->width === 0)
-		{
-			return $this->raiseError('Width can\'t be 0');
-		}
-		$height = (int) abs($height);
-		if ($height === 0)
-		{
-			/* Calculating height from memory consumption, and add a 100% security margin: 10 => 20 */
-			$this->height = floor(($this->memory - 500000 - 100 * ($this->dot * 360 + 6000)) / (20 * $width));
-			/* Limit height to 1000px max, with a modulo of 10 */
-			$this->height = (int) max(100, min(1000, $this->height - $this->height % 10));
-		}
-		else
-		{
-			/* Force height */
-			$this->height = $height;
-		}
-
+		
+		
 		/* Startup tasks */
 		if ($this->startDrawing() === false)
 		{
