@@ -26,9 +26,8 @@ INSERT INTO `CLICKS` (`CLICK_X`, `CLICK_Y`) VALUES (10, 10),(20, 20),(30, 30),(4
 //exit('Enlevez cette ligne pour que ce fichier marche/Remove this line to make this file work');
 
 include 'utils/Heatmap.class.php';
-include 'utils/HeatmapFromDatabase.class.php';
 
-$heatmap = new HeatmapFromDatabase();
+$heatmap = new Heatmap();
 /**
  * Requête (CLICK_Y se doit d'avoir un index pour de bonnes performances, voir EXPLAIN dans le manuel MySQL)
  * The query (CLICK_Y should have an index for good performances, see EXPLAIN in MySQL manual)
@@ -65,7 +64,7 @@ else
 	echo '<br /><br /><p style="line-height:0;">';
 	for ($i = 0; $i < $images['count']; $i++)
 	{
-		echo '<img src="', $images['filenames'][$i], '" width="', $images['width'], '" height="', $images['height'], '" alt="" /> Image ', $i, '<br />';
+		echo '<img src="', $images['filenames'][$i], '" width="', $images['width'], '" height="', $images['height'], '" alt="" /> Image ', $i, '<br /><br /><br /><br />';
 	}
 	echo '</p>';
 }
