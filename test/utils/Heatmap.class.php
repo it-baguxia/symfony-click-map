@@ -211,67 +211,9 @@ class Heatmap
 			}
 		}
 
-		/**
-		 * Colors creation:
-		 * grey	=> deep blue (rgB)	=> light blue (rGB)	=> green (rGb)		=> yellow (RGb)		=> red (Rgb)
-		 * 0	   $this->__colors[0]	   $this->__colors[1]	   $this->__colors[2]	   $this->__colors[3]	   128
-		 * */
-		sort($this->__colors);
-		$colors = array();
-		for ($i = 0; $i < 128; $i++)
-		{
-			/* Red */
-			if ($i < $this->__colors[0])
-			{
-				$colors[$i][0] = $this->__grey + ($this->__low - $this->__grey) * $i / $this->__colors[0];
-			}
-			elseif ($i < $this->__colors[2])
-			{
-				$colors[$i][0] = $this->__low;
-			}
-			elseif ($i < $this->__colors[3])
-			{
-				$colors[$i][0] = $this->__low + ($this->__high - $this->__low) * ($i - $this->__colors[2]) / ($this->__colors[3] - $this->__colors[2]);
-			}
-			else
-			{
-				$colors[$i][0] = $this->__high;
-			}
-			/* Green */
-			if ($i < $this->__colors[0])
-			{
-				$colors[$i][1] = $this->__grey + ($this->__low - $this->__grey) * $i / $this->__colors[0];
-			}
-			elseif ($i < $this->__colors[1])
-			{
-				$colors[$i][1] = $this->__low + ($this->__high - $this->__low) * ($i - $this->__colors[0]) / ($this->__colors[1] - $this->__colors[0]);
-			}
-			elseif ($i < $this->__colors[3])
-			{
-				$colors[$i][1] = $this->__high;
-			}
-			else
-			{
-				$colors[$i][1] = $this->__high - ($this->__high - $this->__low) * ($i - $this->__colors[3]) / (127 - $this->__colors[3]);
-			}
-			/* Blue */
-			if ($i < $this->__colors[0])
-			{
-				$colors[$i][2] = $this->__grey + ($this->__high - $this->__grey) * $i / $this->__colors[0];
-			}
-			elseif ($i < $this->__colors[1])
-			{
-				$colors[$i][2] = $this->__high;
-			}
-			elseif ($i < $this->__colors[2])
-			{
-				$colors[$i][2] = $this->__high - ($this->__high - $this->__low) * ($i - $this->__colors[1]) / ($this->__colors[2] - $this->__colors[1]);
-			}
-			else
-			{
-				$colors[$i][2] = $this->__low;
-			}
-		}
+		
+		$colors = $this->createColors();
+		
 		for ($image = 0; $image < $nbOfImages; $image++)
 		{
 			$img = imagecreatetruecolor($this->width, $this->height);
@@ -376,11 +318,7 @@ class Heatmap
 					imagestring($img, 1, 1, $this->height - 9, LANG_NO_CLICK_BELOW, $gray);
 				}
 				/* Copyleft */
-				if ($this->copyleft === true)
-				{
-					imagestring($img, 1, $this->width - 160, $this->height - 9, 'Open source heatmap by ClickHeat', $grey);
-					imagestring($img, 1, $this->width - 161, $this->height - 9, 'Open source heatmap by ClickHeat', $gray);
-				}
+				$this->drawCopyright($img,$grey,$gray);
 			}
 
 			/* Save PNG file */
@@ -393,6 +331,91 @@ class Heatmap
 		}
 		return $files;
 	}
+	
+	/**
+	 * Colors creation:
+	 * grey	=> deep blue (rgB)	=> light blue (rGB)	=> green (rGb)		=> yellow (RGb)		=> red (Rgb)
+	 * 0	   $this->__colors[0]	   $this->__colors[1]	   $this->__colors[2]	   $this->__colors[3]	   128
+	 * */
+	private function createColors(){
+		
+		sort($this->__colors);
+		$colors = array();
+		for ($i = 0; $i < 128; $i++)
+		{
+		/* Red */
+		if ($i < $this->__colors[0])
+		{
+		$colors[$i][0] = $this->__grey + ($this->__low - $this->__grey) * $i / $this->__colors[0];
+		}
+		elseif ($i < $this->__colors[2])
+		{
+		$colors[$i][0] = $this->__low;
+		}
+		elseif ($i < $this->__colors[3])
+		{
+		$colors[$i][0] = $this->__low + ($this->__high - $this->__low) * ($i - $this->__colors[2]) / ($this->__colors[3] - $this->__colors[2]);
+		}
+		else
+		{
+		$colors[$i][0] = $this->__high;
+		}
+		/* Green */
+		if ($i < $this->__colors[0])
+		{
+		$colors[$i][1] = $this->__grey + ($this->__low - $this->__grey) * $i / $this->__colors[0];
+		}
+		elseif ($i < $this->__colors[1])
+		{
+		$colors[$i][1] = $this->__low + ($this->__high - $this->__low) * ($i - $this->__colors[0]) / ($this->__colors[1] - $this->__colors[0]);
+		}
+		elseif ($i < $this->__colors[3])
+		{
+		$colors[$i][1] = $this->__high;
+		}
+		else
+		{
+		$colors[$i][1] = $this->__high - ($this->__high - $this->__low) * ($i - $this->__colors[3]) / (127 - $this->__colors[3]);
+		}
+		/* Blue */
+		if ($i < $this->__colors[0])
+		{
+		$colors[$i][2] = $this->__grey + ($this->__high - $this->__grey) * $i / $this->__colors[0];
+		}
+		elseif ($i < $this->__colors[1])
+		{
+		$colors[$i][2] = $this->__high;
+		}
+		elseif ($i < $this->__colors[2])
+		{
+		$colors[$i][2] = $this->__high - ($this->__high - $this->__low) * ($i - $this->__colors[1]) / ($this->__colors[2] - $this->__colors[1]);
+		}
+		else
+		{
+		$colors[$i][2] = $this->__low;
+		}
+		}
+		
+		return $colors;
+	}//function createColors() end
+	
+	
+	
+	
+	/**
+	 * 根据情况向图像的右下角写入版权文字
+	 * 
+	 */
+	private function drawCopyright($img,$grey,$gray){
+		
+		if ($this->copyleft === true)
+		{
+			imagestring($img, 1, $this->width - 160, $this->height - 9, 'Open source heatmap by ClickHeat', $grey);
+			imagestring($img, 1, $this->width - 161, $this->height - 9, 'Open source heatmap by ClickHeat', $gray);
+		}
+	}
+	
+	
 
 	/**
 	 * Retourne une erreur / Returns an error
@@ -419,7 +442,11 @@ class Heatmap
 		{
 			return $this->raiseError('Database selection error: '.$this->database);
 		}
+		
+		//echo $this->maxQuery;
 		$result = mysql_query($this->maxQuery);
+		
+		
 		if ($result === false)
 		{
 			return $this->raiseError('Query failed: '.mysql_error());
