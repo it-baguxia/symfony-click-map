@@ -3,7 +3,7 @@
  * Exemple d'utilisation de la classe HeatmapFromDatabase
  * Use example of HeatmapFromDatabase class
  * 
- * Table utilis¨¦e pour ce test / Used table for this test:
+ * Table utilisï¿½ï¿½e pour ce test / Used table for this test:
 
 CREATE TABLE `CLICKS` (
   `CLICK_X` smallint(5) unsigned NOT NULL,
@@ -26,11 +26,10 @@ INSERT INTO `CLICKS` (`CLICK_X`, `CLICK_Y`) VALUES (10, 10),(20, 20),(30, 30),(4
 //exit('Enlevez cette ligne pour que ce fichier marche/Remove this line to make this file work');
 
 include 'utils/Heatmap.class.php';
-include 'utils/HeatmapFromDatabase.class.php';
 
-$heatmap = new HeatmapFromDatabase();
+$heatmap = new Heatmap();
 /**
- * Requ¨ºte (CLICK_Y se doit d'avoir un index pour de bonnes performances, voir EXPLAIN dans le manuel MySQL)
+ * Requï¿½ï¿½te (CLICK_Y se doit d'avoir un index pour de bonnes performances, voir EXPLAIN dans le manuel MySQL)
  * The query (CLICK_Y should have an index for good performances, see EXPLAIN in MySQL manual)
 **/
 $heatmap->query = 'SELECT CLICK_X, CLICK_Y FROM CLICKS WHERE CLICK_Y BETWEEN %d AND %d';
@@ -42,18 +41,20 @@ $heatmap->password = 'clickmap';
 /** Fichiers temporaires / Temporary files */
 $heatmap->cache = dirname(__FILE__).'/temp';
 
-/** Fichiers g¨¦n¨¦r¨¦s / Generated files */
+/** Fichiers gï¿½ï¿½nï¿½ï¿½rï¿½ï¿½s / Generated files */
 $heatmap->path  = dirname(__FILE__).'/images';
 
 
 /** Fichier final / Final file */
 $heatmap->file = 'resultfromdb-%d.png';
 /**
- * On force la hauteur finale (attention ¨¤ la consommation m¨¦moire dans ce cas !)
+ * On force la hauteur finale (attention ï¿½ï¿½ la consommation mï¿½ï¿½moire dans ce cas !)
  * Forcing final height (take care of the memory consumption in such case!)
 **/
 $images = $heatmap->generate(200, 100);
-echo 'R¨¦sultats/Results: ';
+
+
+echo 'Rï¿½ï¿½sultats/Results: ';
 if ($images === false)
 {
 	echo 'error: '.$heatmap->error;
